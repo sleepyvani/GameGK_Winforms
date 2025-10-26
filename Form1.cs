@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
+using System.Media;
 
 namespace GameGK
 {
@@ -23,7 +24,10 @@ namespace GameGK
         private int tickMs = 500;
         private int highScore;
         private const string highScoreFile = "highscore.txt";
-
+        private readonly SoundPlayer moveSound = new SoundPlayer(Properties.Resources.move);
+        private readonly SoundPlayer lockSound = new SoundPlayer(Properties.Resources.lock);
+        private readonly SoundPlayer clearSound = new SoundPlayer(Properties.Resources.clear);
+        private readonly SoundPlayer gameOverSound = new SoundPlayer(Properties.Resources.gameover);
         private Color[] palette = new Color[]
         {
             Color.Black,
@@ -183,6 +187,7 @@ namespace GameGK
             {
                 gameOver = true; running = false;
                 gameTimer.Stop();
+                gameOverSound.Play(); 
 
                 if (score > highScore)
                 {
@@ -225,6 +230,7 @@ namespace GameGK
 
         private void LockPiece()
         {
+            lockSound.Play(); 
             int[,] mat = GetMatrix(current, curRot);
             int id = (int)current;
 
@@ -268,6 +274,7 @@ namespace GameGK
 
             if (cleared > 0)
             {
+                clearSound.Play();
                 int add = 0;
                 switch (cleared)
                 {
@@ -294,6 +301,7 @@ namespace GameGK
             int nr = curRow + dr, nc = curCol + dc;
             if (!CanPlace(current, nr, nc, curRot)) return false;
             curRow = nr; curCol = nc;
+            moveSound.Play(); 
             boardPanel.Invalidate();
             return true;
         }
@@ -309,6 +317,7 @@ namespace GameGK
                 {
                     curRot = newRot;
                     curCol += k;
+                    moveSound.Play(); 
                     boardPanel.Invalidate();
                     return;
                 }
