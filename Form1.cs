@@ -6,11 +6,16 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using System.Media;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace GameGK
 {
     public partial class Form1 : Form
     {
+        private IWavePlayer waveOut;
+        private MixingSampleProvider mixer;
+
         private const int COLS = 10;
         private const int ROWS = 20;
         private const int CELL = 24;
@@ -24,10 +29,10 @@ namespace GameGK
         private int tickMs = 500;
         private int highScore;
         private const string highScoreFile = "highscore.txt";
-        private readonly SoundPlayer moveSound = new SoundPlayer(Properties.Resources.move);
-        private readonly SoundPlayer lockSound = new SoundPlayer(Properties.Resources.lock);
-        private readonly SoundPlayer clearSound = new SoundPlayer(Properties.Resources.clear);
-        private readonly SoundPlayer gameOverSound = new SoundPlayer(Properties.Resources.gameover);
+        private byte[] moveSoundData;
+        private byte[] lockSoundData;
+        private byte[] clearSoundData;
+        private byte[] gameOverSoundData;
         private Color[] palette = new Color[]
         {
             Color.Black,
@@ -94,6 +99,12 @@ namespace GameGK
         public Form1()
         {
             InitializeComponent();
+            waveOut = new WaveOutEvent();            
+            mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
+            mixer.ReadFully = true; 
+            waveOut.Init(mixer);
+            waveOut.Play();
+            LoadSounds();
             LoadHighScore(); 
             lblHighScore.Text = highScore.ToString(); 
             ForceBoardSize();
@@ -109,6 +120,8 @@ namespace GameGK
             ResetGame();
         }
 
+        
+
         private void Form1_Load(object sender, EventArgs e)
         {
             ForceBoardSize();
@@ -118,6 +131,50 @@ namespace GameGK
         {
             ForceBoardSize();
         }
+
+        private void LoadSounds()
+        {
+            using (var stream = new System.IO.MemoryStream())
+            {
+                Properties.Resources._move.CopyTo(stream);
+                moveSoundData = stream.ToArray();
+                stream.SetLength(0); // Reset stream cho file tiếp theo
+
+                Properties.Resources._lock.CopyTo(stream);
+                lockSoundData = stream.ToArray();
+                stream.SetLength(0);
+
+                Properties.Resources._clear.CopyTo(stream);
+                clearSoundData = stream.ToArray();
+                stream.SetLength(0);
+
+                Properties.Resources._gameover.CopyTo(stream);
+                gameOverSoundData = stream.ToArray();
+            }
+        }
+
+        private void PlaySound(byte[] soundData)
+        {
+            // Tạo một luồng đọc trong bộ nhớ từ dữ liệu đã nạp sẵn
+            var stream = new System.IO.MemoryStream(soundData);
+            var waveReader = new WaveFileReader(stream);
+
+            // Chuyển đổi và thêm vào bộ trộn
+            ISampleProvider soundToPlay = waveReader.ToSampleProvider();
+
+            if (soundToPlay.WaveFormat.SampleRate != mixer.WaveFormat.SampleRate ||
+                soundToPlay.WaveFormat.Channels != mixer.WaveFormat.Channels)
+            {
+                soundToPlay = new WdlResamplingSampleProvider(soundToPlay, mixer.WaveFormat.SampleRate);
+                if (soundToPlay.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+                {
+                    soundToPlay = new MonoToStereoSampleProvider(soundToPlay);
+                }
+            }
+
+            mixer.AddMixerInput(soundToPlay);
+        }
+
         private void LoadHighScore()
         {
             if (File.Exists(highScoreFile))
@@ -179,16 +236,16 @@ namespace GameGK
 
         private void SpawnNew()
         {
+            
             current = next;
             next = RandomPiece();
             curRot = 0; curRow = 0; curCol = 3;
 
             if (!CanPlace(current, curRow, curCol, curRot))
             {
+                PlaySound(gameOverSoundData);
                 gameOver = true; running = false;
                 gameTimer.Stop();
-                gameOverSound.Play(); 
-
                 if (score > highScore)
                 {
                     highScore = score;
@@ -230,7 +287,7 @@ namespace GameGK
 
         private void LockPiece()
         {
-            lockSound.Play(); 
+            PlaySound(lockSoundData);
             int[,] mat = GetMatrix(current, curRot);
             int id = (int)current;
 
@@ -274,7 +331,7 @@ namespace GameGK
 
             if (cleared > 0)
             {
-                clearSound.Play();
+                PlaySound(clearSoundData);
                 int add = 0;
                 switch (cleared)
                 {
@@ -301,7 +358,7 @@ namespace GameGK
             int nr = curRow + dr, nc = curCol + dc;
             if (!CanPlace(current, nr, nc, curRot)) return false;
             curRow = nr; curCol = nc;
-            moveSound.Play(); 
+            PlaySound(moveSoundData);
             boardPanel.Invalidate();
             return true;
         }
@@ -317,7 +374,7 @@ namespace GameGK
                 {
                     curRot = newRot;
                     curCol += k;
-                    moveSound.Play(); 
+                    PlaySound(moveSoundData); 
                     boardPanel.Invalidate();
                     return;
                 }

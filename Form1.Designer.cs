@@ -72,6 +72,7 @@
             this.lblLines.Size = new System.Drawing.Size(17, 19);
             this.lblLines.TabIndex = 4;
             this.lblLines.Text = "0";
+            this.lblHighScoreTitle = new System.Windows.Forms.Label();
             this.lblHighScoreTitle.AutoSize = true;
             this.lblHighScoreTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.lblHighScoreTitle.Location = new System.Drawing.Point(268, 80); 
@@ -79,6 +80,7 @@
             this.lblHighScoreTitle.Size = new System.Drawing.Size(94, 19);
             this.lblHighScoreTitle.TabIndex = 6;
             this.lblHighScoreTitle.Text = "High Score:";
+            this.lblHighScore = new System.Windows.Forms.Label();
             this.lblHighScore.AutoSize = true;
             this.lblHighScore.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.lblHighScore.Location = new System.Drawing.Point(368, 80); 

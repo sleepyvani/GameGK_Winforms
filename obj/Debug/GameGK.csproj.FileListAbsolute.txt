@@ -8,3 +8,34 @@ V:\CSharp\GameGK\bin\Debug\GameGK.pdb
 V:\CSharp\GameGK\obj\Debug\GameGK.exe
 V:\CSharp\GameGK\obj\Debug\GameGK.pdb
 V:\CSharp\GameGK\obj\Debug\GameGK.exe.config
+D:\Thư mục mới\bin\Debug\GameGK.exe.config
+D:\Thư mục mới\bin\Debug\GameGK.exe
+D:\Thư mục mới\bin\Debug\GameGK.pdb
+D:\Thư mục mới\obj\Debug\GameGK.csproj.AssemblyReference.cache
+D:\Thư mục mới\obj\Debug\GameGK.exe.config
+D:\Thư mục mới\obj\Debug\GameGK.Properties.Resources.resources
+D:\Thư mục mới\obj\Debug\GameGK.csproj.GenerateResource.cache
+D:\Thư mục mới\obj\Debug\GameGK.csproj.CoreCompileInputs.cache
+D:\Thư mục mới\obj\Debug\GameGK.exe
+D:\Thư mục mới\obj\Debug\GameGK.pdb
+D:\Thư mục mới\bin\Debug\Microsoft.Win32.Registry.dll
+D:\Thư mục mới\bin\Debug\NAudio.Asio.dll
+D:\Thư mục mới\bin\Debug\NAudio.Core.dll
+D:\Thư mục mới\bin\Debug\NAudio.dll
+D:\Thư mục mới\bin\Debug\NAudio.Midi.dll
+D:\Thư mục mới\bin\Debug\NAudio.Wasapi.dll
+D:\Thư mục mới\bin\Debug\NAudio.WinForms.dll
+D:\Thư mục mới\bin\Debug\NAudio.WinMM.dll
+D:\Thư mục mới\bin\Debug\System.Security.AccessControl.dll
+D:\Thư mục mới\bin\Debug\System.Security.Principal.Windows.dll
+D:\Thư mục mới\bin\Debug\Microsoft.Win32.Registry.xml
+D:\Thư mục mới\bin\Debug\NAudio.xml
+D:\Thư mục mới\bin\Debug\NAudio.Asio.xml
+D:\Thư mục mới\bin\Debug\NAudio.Core.xml
+D:\Thư mục mới\bin\Debug\NAudio.Midi.xml
+D:\Thư mục mới\bin\Debug\NAudio.Wasapi.xml
+D:\Thư mục mới\bin\Debug\NAudio.WinForms.xml
+D:\Thư mục mới\bin\Debug\NAudio.WinMM.xml
+D:\Thư mục mới\bin\Debug\System.Security.AccessControl.xml
+D:\Thư mục mới\bin\Debug\System.Security.Principal.Windows.xml
+D:\Thư mục mới\obj\Debug\GameGK.csproj.Up2Date
