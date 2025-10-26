@@ -1,0 +1,10 @@
+V:\CSharp\GameGK\obj\Debug\GameGK.csproj.AssemblyReference.cache
+V:\CSharp\GameGK\obj\Debug\GameGK.Properties.Resources.resources
+V:\CSharp\GameGK\obj\Debug\GameGK.csproj.GenerateResource.cache
+V:\CSharp\GameGK\obj\Debug\GameGK.csproj.CoreCompileInputs.cache
+V:\CSharp\GameGK\bin\Debug\GameGK.exe.config
+V:\CSharp\GameGK\bin\Debug\GameGK.exe
+V:\CSharp\GameGK\bin\Debug\GameGK.pdb
+V:\CSharp\GameGK\obj\Debug\GameGK.exe
+V:\CSharp\GameGK\obj\Debug\GameGK.pdb
+V:\CSharp\GameGK\obj\Debug\GameGK.exe.config
