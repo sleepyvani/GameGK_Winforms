@@ -11,6 +11,8 @@
         private System.Windows.Forms.Label lblLines;
         private System.Windows.Forms.Label lblHelp;
         private System.Windows.Forms.Timer gameTimer;
+        private System.Windows.Forms.Label lblHighScoreTitle;
+        private System.Windows.Forms.Label lblHighScore;
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -70,9 +72,23 @@
             this.lblLines.Size = new System.Drawing.Size(17, 19);
             this.lblLines.TabIndex = 4;
             this.lblLines.Text = "0";
+            this.lblHighScoreTitle.AutoSize = true;
+            this.lblHighScoreTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblHighScoreTitle.Location = new System.Drawing.Point(268, 80); 
+            this.lblHighScoreTitle.Name = "lblHighScoreTitle";
+            this.lblHighScoreTitle.Size = new System.Drawing.Size(94, 19);
+            this.lblHighScoreTitle.TabIndex = 6;
+            this.lblHighScoreTitle.Text = "High Score:";
+            this.lblHighScore.AutoSize = true;
+            this.lblHighScore.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.lblHighScore.Location = new System.Drawing.Point(368, 80); 
+            this.lblHighScore.Name = "lblHighScore";
+            this.lblHighScore.Size = new System.Drawing.Size(17, 19);
+            this.lblHighScore.TabIndex = 7;
+            this.lblHighScore.Text = "0";
             this.lblHelp.AutoSize = true;
             this.lblHelp.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblHelp.Location = new System.Drawing.Point(268, 90);
+            this.lblHelp.Location = new System.Drawing.Point(268, 120);
             this.lblHelp.Name = "lblHelp";
             this.lblHelp.Size = new System.Drawing.Size(210, 150);
             this.lblHelp.TabIndex = 5;
@@ -82,6 +98,8 @@
             this.gameTimer.Tick += new System.EventHandler(this.gameTimer_Tick);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(492, 504);
+            this.Controls.Add(this.lblHighScore);        
+            this.Controls.Add(this.lblHighScoreTitle);   
             this.Controls.Add(this.lblHelp);
             this.Controls.Add(this.lblLines);
             this.Controls.Add(this.lblLinesTitle);

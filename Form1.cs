@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO; 
 using System.Reflection;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
@@ -20,6 +21,8 @@ namespace GameGK
         private bool running, gameOver;
         private int score, lines;
         private int tickMs = 500;
+        private int highScore;
+        private const string highScoreFile = "highscore.txt";
 
         private Color[] palette = new Color[]
         {
@@ -87,6 +90,8 @@ namespace GameGK
         public Form1()
         {
             InitializeComponent();
+            LoadHighScore(); 
+            lblHighScore.Text = highScore.ToString(); 
             ForceBoardSize();
             boardPanel.Margin = Padding.Empty;
             boardPanel.Padding = Padding.Empty;
@@ -108,6 +113,23 @@ namespace GameGK
         private void Form1_Resize(object sender, EventArgs e)
         {
             ForceBoardSize();
+        }
+        private void LoadHighScore()
+        {
+            if (File.Exists(highScoreFile))
+            {
+                string content = File.ReadAllText(highScoreFile);
+                int.TryParse(content, out highScore);
+            }
+            else
+            {
+                highScore = 0;
+            }
+        }
+
+        private void SaveHighScore()
+        {
+            File.WriteAllText(highScoreFile, highScore.ToString());
         }
 
         private void ForceBoardSize()
@@ -134,6 +156,7 @@ namespace GameGK
             score = 0; lines = 0; tickMs = 500;
             lblScore.Text = "0";
             lblLines.Text = "0";
+            lblHighScore.Text = highScore.ToString();
             lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart";
 
             next = RandomPiece();
@@ -160,7 +183,18 @@ namespace GameGK
             {
                 gameOver = true; running = false;
                 gameTimer.Stop();
-                lblHelp.Text = "Game Over! Nhấn R để chơi lại.";
+
+                if (score > highScore)
+                {
+                    highScore = score;
+                    lblHighScore.Text = highScore.ToString();
+                    SaveHighScore();
+                    lblHelp.Text = "New High Score! Nhấn R để chơi lại.";
+                }
+                else
+                {
+                    lblHelp.Text = "Game Over! Nhấn R để chơi lại.";
+                }
             }
         }
 
@@ -285,7 +319,6 @@ namespace GameGK
         {
             if (TryMove(1, 0))
             {
-                score += 1;
                 lblScore.Text = score.ToString();
             }
             else LockPiece();
@@ -315,7 +348,12 @@ namespace GameGK
 
             if (!running)
             {
-                if (e.KeyCode == Keys.P) { running = true; gameTimer.Start(); lblHelp.Text = "Đang chơi..."; }
+                if (e.KeyCode == Keys.P) 
+                { 
+                    running = true; 
+                    gameTimer.Start(); 
+                    lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart"; 
+                }
                 else if (e.KeyCode == Keys.R) ResetGame();
                 return;
             }
