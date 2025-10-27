@@ -41,3 +41,4 @@ D:\Thư mục mới\bin\Debug\System.Security.Principal.Windows.xml
 D:\Thư mục mới\obj\Debug\GameGK.csproj.Up2Date
 D:\Thư mục mới\obj\Debug\GameGK.Form1.resources
 D:\Thư mục mới\obj\Debug\GameGK.SettingsForm.resources
+D:\Thư mục mới\obj\Debug\GameGK.HistoryForm.resources

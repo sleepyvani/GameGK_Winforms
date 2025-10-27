@@ -38,6 +38,7 @@
             this.btnPause = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
             this.nextPiecePanel = new System.Windows.Forms.Panel();
+            this.btnHistory = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // boardPanel
@@ -111,13 +112,13 @@
             // 
             // lblHighScoreTitle
             // 
-            this.lblHighScoreTitle.AutoSize = true;
             this.lblHighScoreTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.lblHighScoreTitle.Location = new System.Drawing.Point(255, 72);
             this.lblHighScoreTitle.Name = "lblHighScoreTitle";
-            this.lblHighScoreTitle.Size = new System.Drawing.Size(103, 23);
+            this.lblHighScoreTitle.Size = new System.Drawing.Size(104, 60);
             this.lblHighScoreTitle.TabIndex = 6;
             this.lblHighScoreTitle.Text = "High Score:";
+            this.lblHighScoreTitle.Click += new System.EventHandler(this.lblHighScoreTitle_Click);
             // 
             // lblHighScore
             // 
@@ -172,16 +173,27 @@
             // nextPiecePanel
             // 
             this.nextPiecePanel.BackColor = System.Drawing.Color.Black;
-            this.nextPiecePanel.Location = new System.Drawing.Point(259, 98);
+            this.nextPiecePanel.Location = new System.Drawing.Point(259, 126);
             this.nextPiecePanel.Name = "nextPiecePanel";
             this.nextPiecePanel.Size = new System.Drawing.Size(100, 100);
             this.nextPiecePanel.TabIndex = 12;
             this.nextPiecePanel.Paint += new System.Windows.Forms.PaintEventHandler(this.nextPiecePanel_Paint);
             // 
+            // btnHistory
+            // 
+            this.btnHistory.Location = new System.Drawing.Point(343, 469);
+            this.btnHistory.Name = "btnHistory";
+            this.btnHistory.Size = new System.Drawing.Size(75, 23);
+            this.btnHistory.TabIndex = 13;
+            this.btnHistory.Text = "Lịch sử";
+            this.btnHistory.UseVisualStyleBackColor = true;
+            this.btnHistory.Click += new System.EventHandler(this.btnHistory_Click);
+            // 
             // Form1
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(580, 504);
+            this.Controls.Add(this.btnHistory);
             this.Controls.Add(this.nextPiecePanel);
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.btnPause);
@@ -211,5 +223,6 @@
         private System.Windows.Forms.Button btnPause;
         private System.Windows.Forms.Button btnExit;
         private System.Windows.Forms.Panel nextPiecePanel;
+        private System.Windows.Forms.Button btnHistory;
     }
 }

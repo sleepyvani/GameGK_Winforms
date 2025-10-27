@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO; 
-using System.Reflection;
-using System.Windows.Forms;
-using System.Drawing.Drawing2D;
-using System.Media;
+﻿using Microsoft.VisualBasic;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO; 
+using System.Linq;
+using System.Reflection;
+using System.Windows.Forms;
 
 namespace GameGK
 {
@@ -28,7 +29,9 @@ namespace GameGK
         private int score, lines;
         private int tickMs = 500;
         private int highScore;
+        private string highScoreName;
         private const string highScoreFile = "highscore.txt";
+        private List<Tuple<int, DateTime>> playHistory = new List<Tuple<int, DateTime>>();
         private byte[] moveSoundData;
         private byte[] lockSoundData;
         private byte[] clearSoundData;
@@ -56,7 +59,7 @@ namespace GameGK
             lines = 0;
             lblScore.Text = "0";
             lblLines.Text = "0";
-            lblHighScore.Text = highScore.ToString();
+            lblHighScore.Text = highScoreName + " (" + highScore.ToString() + ")";
 
             lblHelp.Text = "Nhấn 'Chơi mới/R' để bắt đầu!";
 
@@ -138,8 +141,8 @@ namespace GameGK
             waveOut.Init(mixer);
             waveOut.Play();
             LoadSounds();
-            LoadHighScore(); 
-            lblHighScore.Text = highScore.ToString(); 
+            LoadHighScore();
+            lblHighScore.Text = highScoreName + " (" + highScore.ToString() + ")";
             ForceBoardSize();
             boardPanel.Margin = Padding.Empty;
             boardPanel.Padding = Padding.Empty;
@@ -152,8 +155,31 @@ namespace GameGK
 
             PrepareInitialScreen();
         }
+        public class AutoDisposableSampleProvider : ISampleProvider
+        {
+            private readonly ISampleProvider source;
+            private readonly IDisposable[] disposables;
+            private bool isDisposed;
+            public AutoDisposableSampleProvider(ISampleProvider source, params IDisposable[] disposables) { this.source = source; this.disposables = disposables; }
+            public WaveFormat WaveFormat => source.WaveFormat;
+            public int Read(float[] buffer, int offset, int count)
+            {
+                if (isDisposed) return 0;
+                int read = source.Read(buffer, offset, count);
+                if (read == 0) { Dispose(); }
+                return read;
+            }
+            private void Dispose()
+            {
+                if (!isDisposed)
+                {
+                    isDisposed = true;
+                    foreach (var disposable in disposables) { disposable.Dispose(); }
+                }
+            }
+        }
 
-        
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -188,44 +214,85 @@ namespace GameGK
 
         private void PlaySound(byte[] soundData)
         {
-            if (!Properties.Settings.Default.SoundEnabled)
-            {
-                return;
-            }
-            var stream = new System.IO.MemoryStream(soundData);
-            var waveReader = new WaveFileReader(stream);
+            if (soundData == null || !Properties.Settings.Default.SoundEnabled) return;
 
-            ISampleProvider soundToPlay = waveReader.ToSampleProvider();
+            var stream = new MemoryStream(soundData);
+            var reader = new WaveFileReader(stream);
+            ISampleProvider provider = reader.ToSampleProvider();
 
-            if (soundToPlay.WaveFormat.SampleRate != mixer.WaveFormat.SampleRate ||
-                soundToPlay.WaveFormat.Channels != mixer.WaveFormat.Channels)
+            if (provider.WaveFormat.SampleRate != mixer.WaveFormat.SampleRate || provider.WaveFormat.Channels != mixer.WaveFormat.Channels)
             {
-                soundToPlay = new WdlResamplingSampleProvider(soundToPlay, mixer.WaveFormat.SampleRate);
-                if (soundToPlay.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+                provider = new WdlResamplingSampleProvider(provider, mixer.WaveFormat.SampleRate);
+                if (provider.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
                 {
-                    soundToPlay = new MonoToStereoSampleProvider(soundToPlay);
+                    provider = new MonoToStereoSampleProvider(provider);
                 }
             }
 
-            mixer.AddMixerInput(soundToPlay);
+            var autoDisposableProvider = new AutoDisposableSampleProvider(provider, reader, stream);
+            mixer.AddMixerInput(autoDisposableProvider);
         }
 
         private void LoadHighScore()
         {
+            highScoreName = "No Name";
+            highScore = 0;
+            playHistory.Clear();
+
             if (File.Exists(highScoreFile))
             {
-                string content = File.ReadAllText(highScoreFile);
-                int.TryParse(content, out highScore);
-            }
-            else
-            {
-                highScore = 0;
+                try
+                {
+                    var lines = File.ReadAllLines(highScoreFile).ToList();
+                    if (lines.Count > 0)
+                    {
+                        string[] topScoreParts = lines[0].Split(',');
+                        if (topScoreParts.Length == 2)
+                        {
+                            highScoreName = topScoreParts[0];
+                            int.TryParse(topScoreParts[1], out highScore);
+                        }
+                        lines.RemoveAt(0);
+                    }
+
+                    foreach (string line in lines)
+                    {
+                        string[] historyParts = line.Split(',');
+                        if (historyParts.Length == 2 && int.TryParse(historyParts[0], out int scoreValue) && DateTime.TryParse(historyParts[1], out DateTime timeValue))
+                        {
+                            playHistory.Add(new Tuple<int, DateTime>(scoreValue, timeValue));
+                        }
+                    }
+                }
+                catch { }
             }
         }
 
-        private void SaveHighScore()
+
+        private void SaveHistoryAndHighScore()
         {
-            File.WriteAllText(highScoreFile, highScore.ToString());
+            playHistory.Insert(0, new Tuple<int, DateTime>(score, DateTime.Now));
+
+            if (playHistory.Count > 10)
+            {
+                playHistory = playHistory.Take(10).ToList();
+            }
+
+            try
+            {
+                List<string> linesToSave = new List<string>();
+                linesToSave.Add(highScoreName + "," + highScore);
+
+                foreach (var entry in playHistory)
+                {
+                    linesToSave.Add(entry.Item1 + "," + entry.Item2.ToString("G"));
+                }
+                File.WriteAllLines(highScoreFile, linesToSave);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể lưu điểm: " + ex.Message);
+            }
         }
 
         private void ForceBoardSize()
@@ -253,7 +320,7 @@ namespace GameGK
             score = 0; lines = 0; tickMs = 500;
             lblScore.Text = "0";
             lblLines.Text = "0";
-            lblHighScore.Text = highScore.ToString();
+            lblHighScore.Text = highScoreName + " (" + highScore.ToString() + ")";
             lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart";
             
             next = RandomPiece();
@@ -282,20 +349,24 @@ namespace GameGK
             if (!CanPlace(current, curRow, curCol, curRot))
             {
                 PlaySound(gameOverSoundData);
-                gameOver = true; running = false;
+                gameOver = true;
+                running = false;
                 gameTimer.Stop();
-                btnPause.Enabled = false; 
+                btnPause.Enabled = false;
+
                 if (score > highScore)
                 {
+                    string newName = Interaction.InputBox("Kỷ lục mới! Vui lòng nhập tên:", "Chúc mừng!");
+                    if (string.IsNullOrWhiteSpace(newName)) newName = "No Name";
+
                     highScore = score;
-                    lblHighScore.Text = highScore.ToString();
-                    SaveHighScore();
-                    lblHelp.Text = "New High Score! Nhấn R để chơi lại.";
+                    highScoreName = newName;
                 }
-                else
-                {
-                    lblHelp.Text = "Game Over! Nhấn R để chơi lại.";
-                }
+
+                SaveHistoryAndHighScore();
+
+                lblHighScore.Text = highScoreName + " (" + highScore.ToString() + ")";
+                lblHelp.Text = "Game Over! Nhấn R để chơi lại.";
             }
         }
 
@@ -534,6 +605,22 @@ namespace GameGK
         {
             if (!running || gameOver) return;
             if (!TryMove(1, 0)) LockPiece();
+        }
+
+        private void lblHighScoreTitle_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnHistory_Click(object sender, EventArgs e)
+        {
+            if (running) TogglePause();
+
+            HistoryForm historyForm = new HistoryForm();
+            historyForm.DisplayHistory(playHistory);
+            historyForm.ShowDialog(); 
+
+            boardPanel.Focus(); 
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
