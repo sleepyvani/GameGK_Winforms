@@ -45,6 +45,36 @@ namespace GameGK
             Color.Orange         // L
         };
 
+        private void PrepareInitialScreen()
+        {            
+            running = false;
+            gameOver = true;
+            gameTimer.Stop();
+
+            Array.Clear(board, 0, board.Length);
+            score = 0;
+            lines = 0;
+            lblScore.Text = "0";
+            lblLines.Text = "0";
+            lblHighScore.Text = highScore.ToString();
+
+            lblHelp.Text = "Nhấn 'Chơi mới/R' để bắt đầu!";
+
+            btnPause.Enabled = false;
+
+            boardPanel.Invalidate();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Up || keyData == Keys.Down || keyData == Keys.Left || keyData == Keys.Right || keyData == Keys.Space)
+            {
+                Form1_KeyDown(this, new KeyEventArgs(keyData));
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         private static readonly Dictionary<Tetromino, int[][,]> Shapes = new Dictionary<Tetromino, int[][,]>
         {
             { Tetromino.I, new int[][,]
@@ -94,6 +124,9 @@ namespace GameGK
                     new int[,] { {1,1,0,0},{0,1,0,0},{0,1,0,0},{0,0,0,0} }
                 }
             }
+
+
+
         };
 
         public Form1()
@@ -117,7 +150,7 @@ namespace GameGK
             this.Load += new EventHandler(Form1_Load);
             this.Resize += new EventHandler(Form1_Resize);
 
-            ResetGame();
+            PrepareInitialScreen();
         }
 
         
@@ -138,7 +171,7 @@ namespace GameGK
             {
                 Properties.Resources._move.CopyTo(stream);
                 moveSoundData = stream.ToArray();
-                stream.SetLength(0); // Reset stream cho file tiếp theo
+                stream.SetLength(0);
 
                 Properties.Resources._lock.CopyTo(stream);
                 lockSoundData = stream.ToArray();
@@ -155,11 +188,13 @@ namespace GameGK
 
         private void PlaySound(byte[] soundData)
         {
-            // Tạo một luồng đọc trong bộ nhớ từ dữ liệu đã nạp sẵn
+            if (!Properties.Settings.Default.SoundEnabled)
+            {
+                return;
+            }
             var stream = new System.IO.MemoryStream(soundData);
             var waveReader = new WaveFileReader(stream);
 
-            // Chuyển đổi và thêm vào bộ trộn
             ISampleProvider soundToPlay = waveReader.ToSampleProvider();
 
             if (soundToPlay.WaveFormat.SampleRate != mixer.WaveFormat.SampleRate ||
@@ -213,14 +248,16 @@ namespace GameGK
 
         private void ResetGame()
         {
+            btnPause.Enabled = true;
             Array.Clear(board, 0, board.Length);
             score = 0; lines = 0; tickMs = 500;
             lblScore.Text = "0";
             lblLines.Text = "0";
             lblHighScore.Text = highScore.ToString();
             lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart";
-
+            
             next = RandomPiece();
+            nextPiecePanel.Invalidate(); 
             SpawnNew();
 
             gameOver = false; running = true;
@@ -238,6 +275,7 @@ namespace GameGK
         {
             
             current = next;
+            nextPiecePanel.Invalidate(); 
             next = RandomPiece();
             curRot = 0; curRow = 0; curCol = 3;
 
@@ -246,6 +284,7 @@ namespace GameGK
                 PlaySound(gameOverSoundData);
                 gameOver = true; running = false;
                 gameTimer.Stop();
+                btnPause.Enabled = false; 
                 if (score > highScore)
                 {
                     highScore = score;
@@ -287,6 +326,7 @@ namespace GameGK
 
         private void LockPiece()
         {
+            UpdateScore(10); 
             PlaySound(lockSoundData);
             int[,] mat = GetMatrix(current, curRot);
             int id = (int)current;
@@ -340,16 +380,10 @@ namespace GameGK
                     case 3: add = 500; break;
                     default: add = 800; break;
                 }
-                score += add; lines += cleared;
-                lblScore.Text = score.ToString();
+                UpdateScore(add);
+                lines += cleared;
                 lblLines.Text = lines.ToString();
 
-                if (lines % 10 == 0 && tickMs > 110)
-                {
-                    tickMs = (int)(tickMs * 0.95);
-                    if (tickMs < 110) tickMs = 110;
-                    gameTimer.Interval = tickMs;
-                }
             }
         }
 
@@ -394,10 +428,108 @@ namespace GameGK
         {
             int drop = 0;
             while (TryMove(1, 0)) drop++;
-            score += drop * 2;
+            UpdateScore(drop * 2);
             lblScore.Text = score.ToString();
             LockPiece();
         }
+
+        private void btnSettings_Click(object sender, EventArgs e)
+        {
+            if (running)
+            {
+                TogglePause();
+            }
+
+            SettingsForm settingsForm = new SettingsForm();
+            settingsForm.ShowDialog();
+            boardPanel.Focus(); 
+        }
+
+        private void btnNewGame_Click(object sender, EventArgs e)
+        {
+            ResetGame();
+            boardPanel.Focus();
+        }
+
+        private void btnPause_Click(object sender, EventArgs e)
+        {
+            TogglePause();
+            boardPanel.Focus(); 
+        }
+        private void TogglePause()
+        {
+            if (gameOver) return;
+
+            running = !running; 
+
+            if (running)
+            {
+                gameTimer.Start();
+                btnPause.Text = "Tạm dừng"; 
+                lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart";
+            }
+            else
+            {
+                gameTimer.Stop();
+                btnPause.Text = "Tiếp tục"; 
+                lblHelp.Text = "Đã tạm dừng..., Nhấn 'P/Tiếp tục' để tiếp tục";
+            }
+        }
+
+        private void btnExit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void lblHelp_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void nextPiecePanel_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.None;
+
+            Rectangle panelRect = nextPiecePanel.ClientRectangle;
+            using (LinearGradientBrush bg = new LinearGradientBrush(
+                panelRect, Color.FromArgb(18, 18, 28), Color.FromArgb(45, 45, 66), 90f))
+            {
+                g.FillRectangle(bg, panelRect);
+            }
+
+            if (next != 0) 
+            {
+                int[,] mat = GetMatrix(next, 0);
+                Color color = palette[(int)next];
+                const int PREVIEW_CELL_SIZE = 20;
+                int offsetX = (nextPiecePanel.Width - 4 * PREVIEW_CELL_SIZE) / 2;
+                int offsetY = (nextPiecePanel.Height - 4 * PREVIEW_CELL_SIZE) / 2;
+
+                for (int y = 0; y < 4; y++)
+                {
+                    for (int x = 0; x < 4; x++)
+                    {
+                        if (mat[y, x] != 0)
+                        {
+                            Rectangle rect = new Rectangle(offsetX + x * PREVIEW_CELL_SIZE, offsetY + y * PREVIEW_CELL_SIZE, PREVIEW_CELL_SIZE -1, PREVIEW_CELL_SIZE -1);
+                            Color cTop = color;
+                            Color cBottom = ControlPaint.Dark(color);
+                            using (var br = new LinearGradientBrush(rect, cTop, cBottom, 90f))
+                            {
+                                g.FillRectangle(br, rect);
+                            }
+                        }
+                    }
+                }
+            }
+
+            using (Pen pen = new Pen(Color.FromArgb(70, Color.White), 2))
+            {
+                g.DrawRectangle(pen, 0, 0, panelRect.Width - 1, panelRect.Height - 1);
+            }
+        }
+
         private void gameTimer_Tick(object sender, EventArgs e)
         {
             if (!running || gameOver) return;
@@ -415,12 +547,10 @@ namespace GameGK
             if (!running)
             {
                 if (e.KeyCode == Keys.P) 
-                { 
-                    running = true; 
-                    gameTimer.Start(); 
-                    lblHelp.Text = "←/→: Move   ↑: Rotate   ↓: Soft drop   Space: Hard drop\nP: Pause/Resume   R: Restart"; 
+                {
+                    TogglePause();
                 }
-                else if (e.KeyCode == Keys.R) ResetGame();
+                if (e.KeyCode == Keys.R) ResetGame();
                 return;
             }
 
@@ -431,9 +561,7 @@ namespace GameGK
             else if (e.KeyCode == Keys.Space) HardDrop();
             else if (e.KeyCode == Keys.P)
             {
-                running = false;
-                gameTimer.Stop();
-                lblHelp.Text = "Đã tạm dừng (nhấn P để tiếp tục)";
+                TogglePause();
             }
             else if (e.KeyCode == Keys.R) ResetGame();
         }
@@ -515,6 +643,29 @@ namespace GameGK
             using (Pen topLine = new Pen(Color.FromArgb(140, Color.White)))
                 g.DrawLine(topLine, rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Top + 1);
         }
+
+        private void UpdateScore(int pointsToAdd)
+        {
+            int oldScoreMilestone = score / 100;
+
+            score += pointsToAdd;
+            lblScore.Text = score.ToString();
+
+            int newScoreMilestone = score / 100;
+
+            if (newScoreMilestone > oldScoreMilestone)
+            {
+                tickMs = (int)(tickMs * 0.95);
+
+                if (tickMs < 50)
+                {
+                    tickMs = 50;
+                }
+
+                gameTimer.Interval = tickMs;
+            }
+        }
     }
+
     public enum Tetromino { I = 1, O, T, S, Z, J, L }
 }
